@@ -17,6 +17,30 @@ export function isRebaseHeadSet(repository: Repository) {
   return FSE.pathExists(path)
 }
 
+/**
+ * A stub function to use for initiating rebase in the app.
+ *
+ * If the rebase fails, the repository will be in an indeterminate state where
+ * the rebase is stuck.
+ *
+ * If the rebase completes without error, `featureBranch` will be checked out
+ * and it will probably have a different commit history.
+ *
+ * @param baseBranch the ref to start the rebase from
+ * @param featureBranch the ref to rebase onto `baseBranch`
+ */
+export async function rebase(
+  repository: Repository,
+  baseBranch: string,
+  featureBranch: string
+) {
+  return await git(
+    ['rebase', baseBranch, featureBranch],
+    repository.path,
+    'abortRebase'
+  )
+}
+
 /** Abandon the current rebase operation */
 export async function abortRebase(repository: Repository) {
   await git(['rebase', '--abort'], repository.path, 'abortRebase')
