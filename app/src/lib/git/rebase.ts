@@ -7,6 +7,7 @@ import { WorkingDirectoryFileChange } from '../../models/status'
 import { ManualConflictResolution } from '../../models/manual-conflict-resolution'
 import { stageConflictedFile } from './stage'
 import { stageFiles } from './update-index'
+import { GitError } from 'dugite'
 
 /**
  * Check the `.git/REBASE_HEAD` file exists in a repository to confirm
@@ -37,7 +38,8 @@ export async function rebase(
   return await git(
     ['rebase', baseBranch, featureBranch],
     repository.path,
-    'abortRebase'
+    'abortRebase',
+    { expectedErrors: new Set([GitError.RebaseConflicts]) }
   )
 }
 
