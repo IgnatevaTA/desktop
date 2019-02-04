@@ -70,5 +70,17 @@ export async function continueRebase(
 
   await stageFiles(repository, otherFiles)
 
-  await git(['rebase', '--continue'], repository.path, 'continueRebase')
+  // TODO: there are some cases we need to handle and surface here:
+  //  - rebase continued and completed without error
+  //  - rebase continued but encountered a different set of conflicts
+  //  - rebase could not continue as there are outstanding conflicts
+
+  return await git(
+    ['rebase', '--continue'],
+    repository.path,
+    'continueRebase',
+    {
+      successExitCodes: new Set([0, 1, 128]),
+    }
+  )
 }

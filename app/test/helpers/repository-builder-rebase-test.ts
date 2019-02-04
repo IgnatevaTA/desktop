@@ -74,7 +74,7 @@ export async function createRepository(
     entries: [
       {
         path: 'THING.md',
-        contents: '# HELLO WORLD! \nTHINGS GO HEREFEATURE BRANCH UNDERWAY\n',
+        contents: '# HELLO WORLD! \nTHINGS GO HERE\nFEATURE BRANCH UNDERWAY\n',
       },
       {
         path: 'OTHER.md',
