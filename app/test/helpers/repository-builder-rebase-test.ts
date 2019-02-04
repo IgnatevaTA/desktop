@@ -1,6 +1,6 @@
 import { Repository } from '../../src/models/repository'
 import { setupEmptyRepository } from './repositories'
-import { makeCommit } from './repository-scaffolding'
+import { makeCommit, switchTo, createBranch } from './repository-scaffolding'
 
 /**
  * Creates a test repository to be used as the branch for testing rebase
@@ -45,7 +45,50 @@ export async function createRepository(
 
   await makeCommit(repository, secondCommit)
 
-  // TODO: setup the branches
+  await createBranch(repository, firstBranchName, 'HEAD')
+  await createBranch(repository, secondBranchName, 'HEAD')
+
+  await switchTo(repository, firstBranchName)
+
+  const baseBranchCommit = {
+    commitMessage: 'Base Branch!',
+    entries: [
+      {
+        path: 'THING.md',
+        contents: '# HELLO WORLD! \nTHINGS GO HERE\nBASE BRANCH UNDERWAY\n',
+      },
+      {
+        path: 'OTHER.md',
+        contents:
+          '# HELLO WORLD! \nTHINGS GO HERE\nALSO BASE BRANCH UNDERWAY\n',
+      },
+    ],
+  }
+
+  await makeCommit(repository, baseBranchCommit)
+
+  await switchTo(repository, secondBranchName)
+
+  const featureBranchCommit = {
+    commitMessage: 'Base Branch!',
+    entries: [
+      {
+        path: 'THING.md',
+        contents: '# HELLO WORLD! \nTHINGS GO HEREFEATURE BRANCH UNDERWAY\n',
+      },
+      {
+        path: 'OTHER.md',
+        contents:
+          '# HELLO WORLD! \nTHINGS GO HERE\nALSO FEATURE BRANCH UNDERWAY\n',
+      },
+    ],
+  }
+
+  await makeCommit(repository, featureBranchCommit)
+
+  // put the repository back on the default branch
+
+  await switchTo(repository, 'master')
 
   return repository
 }

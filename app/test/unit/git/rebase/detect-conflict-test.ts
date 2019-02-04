@@ -1,8 +1,4 @@
-import {
-  getAheadBehind,
-  revSymmetricDifference,
-  IStatusResult,
-} from '../../../../src/lib/git'
+import { IStatusResult } from '../../../../src/lib/git'
 
 import { Repository } from '../../../../src/models/repository'
 import { createRepository } from '../../../helpers/repository-builder-rebase-test'
@@ -13,7 +9,6 @@ import { AppFileStatusKind } from '../../../../src/models/status'
 
 const baseBranch = 'base-branch'
 const featureBranch = 'this-is-a-feature'
-const origin = 'origin'
 
 describe('git/rebase', () => {
   describe('detect conflicts', () => {
