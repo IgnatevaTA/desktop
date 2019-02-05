@@ -85,7 +85,7 @@ export class ConflictedFilesList extends React.Component<
 
   private renderResolvedFile(path: string): JSX.Element {
     return (
-      <li className="unmerged-file-status-resolved">
+      <li key={path} className="unmerged-file-status-resolved">
         <Octicon symbol={OcticonSymbol.fileCode} className="file-octicon" />
         <div className="column-left">
           <PathText path={path} availableWidth={200} />
