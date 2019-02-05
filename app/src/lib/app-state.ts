@@ -256,14 +256,28 @@ export enum RepositorySectionTab {
 }
 
 /**
- * Stores information about conflicts when handling a merge or rebase
+ * Stores information about conflicts when handling a merge
  */
-export interface IConflictState {
-  readonly kind: 'merge' | 'rebase'
+export type MergeConflictState = {
+  readonly kind: 'merge'
   readonly currentBranch: string
   readonly currentTip: string
   readonly manualResolutions: Map<string, ManualConflictResolution>
 }
+
+/**
+ * Stores information about conflicts when handling a rebase
+ */
+export type RebaseConflictState = {
+  readonly kind: 'rebase'
+  readonly manualResolutions: Map<string, ManualConflictResolution>
+  // TODO: what other state do we need to capture here?
+}
+
+/**
+ * Stores information about conflicts when handling a merge or rebase
+ */
+export type IConflictState = MergeConflictState | RebaseConflictState
 
 export interface IRepositoryState {
   readonly commitSelection: ICommitSelection

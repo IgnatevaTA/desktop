@@ -3,7 +3,12 @@ import {
   WorkingDirectoryFileChange,
 } from '../../../models/status'
 import { IStatusResult } from '../../git'
-import { IChangesState, IConflictState } from '../../app-state'
+import {
+  IChangesState,
+  IConflictState,
+  MergeConflictState,
+  RebaseConflictState,
+} from '../../app-state'
 import { DiffSelectionType, IDiff } from '../../../models/diff'
 import { caseInsensitiveCompare } from '../../compare'
 import { IStatsStore } from '../../stats/stats-store'
@@ -106,33 +111,27 @@ function getConflictState(
     return null
   }
 
-  const kind = status.mergeHeadFound ? 'merge' : 'rebase'
+  if (status.mergeHeadFound) {
+    return {
+      kind: 'merge',
+      currentBranch,
+      currentTip,
+      manualResolutions,
+    }
+  }
 
   return {
-    kind,
-    currentBranch,
-    currentTip,
+    kind: 'rebase',
     manualResolutions,
   }
 }
 
-export function updateConflictState(
-  state: IChangesState,
+function updateMergeConflictState(
   status: IStatusResult,
+  prevConflictState: MergeConflictState | null,
+  newConflictState: MergeConflictState | null,
   statsStore: IStatsStore
-): IConflictState | null {
-  const prevConflictState = state.conflictState
-
-  const manualResolutions = prevConflictState
-    ? prevConflictState.manualResolutions
-    : new Map<string, ManualConflictResolution>()
-
-  const newConflictState = getConflictState(status, manualResolutions)
-
-  if (prevConflictState == null && newConflictState == null) {
-    return null
-  }
-
+): MergeConflictState | null {
   const previousBranchName =
     prevConflictState != null ? prevConflictState.currentBranch : null
   const currentBranchName =
@@ -164,6 +163,60 @@ export function updateConflictState(
     } else {
       statsStore.recordMergeAbortedAfterConflicts()
     }
+  }
+
+  return newConflictState
+}
+
+function updateRebaseConflictState(
+  status: IStatusResult,
+  prevConflictState: RebaseConflictState | null,
+  newConflictState: RebaseConflictState | null,
+  statsStore: IStatsStore
+): RebaseConflictState | null {
+  // TODO: what things should we be looking for as part of the rebase flow?
+  return newConflictState
+}
+
+export function updateConflictState(
+  state: IChangesState,
+  status: IStatusResult,
+  statsStore: IStatsStore
+): IConflictState | null {
+  const prevConflictState = state.conflictState
+
+  const manualResolutions = prevConflictState
+    ? prevConflictState.manualResolutions
+    : new Map<string, ManualConflictResolution>()
+
+  const newConflictState = getConflictState(status, manualResolutions)
+
+  if (prevConflictState === null && newConflictState === null) {
+    return null
+  }
+
+  if (
+    (prevConflictState === null || prevConflictState.kind === 'merge') &&
+    (newConflictState === null || newConflictState.kind === 'merge')
+  ) {
+    return updateMergeConflictState(
+      status,
+      prevConflictState,
+      newConflictState,
+      statsStore
+    )
+  }
+
+  if (
+    (prevConflictState === null || prevConflictState.kind === 'rebase') &&
+    (newConflictState === null || newConflictState.kind === 'rebase')
+  ) {
+    return updateRebaseConflictState(
+      status,
+      prevConflictState,
+      newConflictState,
+      statsStore
+    )
   }
 
   return newConflictState

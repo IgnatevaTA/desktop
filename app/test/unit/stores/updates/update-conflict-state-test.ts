@@ -153,4 +153,38 @@ describe('updateConflictState', () => {
       expect(statsStore.recordMergeSuccessAfterConflicts).toHaveBeenCalled()
     })
   })
+
+  describe('rebase conflicts', () => {
+    it('returns null when no REBASE_HEAD file found', () => {
+      const prevState = createState({
+        conflictState: {
+          kind: 'rebase',
+          manualResolutions,
+        },
+      })
+      const status = createStatus({ rebaseHeadFound: false })
+      const conflictState = updateConflictState(prevState, status, statsStore)
+      expect(conflictState).toBeNull()
+    })
+
+    it('returns a value when status has REBASE_HEAD set ', () => {
+      const prevState = createState({
+        conflictState: null,
+      })
+      const status = createStatus({
+        rebaseHeadFound: true,
+        // TODO: this feels like test noise because these fields are used
+        //       as part of the `merge` conflicts flow
+        currentBranch: 'master',
+        currentTip: 'new-sha',
+      })
+
+      const conflictState = updateConflictState(prevState, status, statsStore)
+
+      expect(conflictState).toEqual({
+        kind: 'rebase',
+        manualResolutions: new Map<string, ManualConflictResolution>(),
+      })
+    })
+  })
 })
