@@ -8,6 +8,7 @@ import { getUnmergedFiles, getConflictedFiles } from '../../lib/status'
 import { ConflictedFilesList } from './conflict-files-list'
 import { Dispatcher } from '../dispatcher'
 import { Repository } from '../../models/repository'
+import { ContinueRebaseResult } from '../../lib/git'
 
 interface IRebaseConflictsDialog {
   readonly dispatcher: Dispatcher
@@ -37,11 +38,14 @@ export class RebaseConflictsDialog extends React.Component<
   }
 
   private onSubmit = async () => {
-    await this.props.dispatcher.continueRebase(
+    const result = await this.props.dispatcher.continueRebase(
       this.props.repository,
       this.props.workingDirectory
     )
-    this.props.onDismissed()
+
+    if (result === ContinueRebaseResult.CompletedWithoutError) {
+      this.props.onDismissed()
+    }
   }
 
   public render() {

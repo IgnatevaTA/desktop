@@ -20,7 +20,7 @@ import {
   setGenericPassword,
   setGenericUsername,
 } from '../../lib/generic-git-auth'
-import { isGitRepository, ContinueRebaseResult } from '../../lib/git'
+import { isGitRepository } from '../../lib/git'
 import { isGitOnPath } from '../../lib/is-git-on-path'
 import {
   rejectOAuthRequest,
@@ -662,12 +662,7 @@ export class Dispatcher {
       }`
     )
 
-    if (result === ContinueRebaseResult.ConflictsEncountered) {
-      this.showPopup({
-        type: PopupType.RebaseConflicts,
-        repository,
-      })
-    }
+    return result
   }
 
   /** aborts an in-flight merge and refreshes the repository's status */
