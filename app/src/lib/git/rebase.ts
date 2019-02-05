@@ -70,6 +70,12 @@ export async function continueRebase(
 
   await stageFiles(repository, otherFiles)
 
+  // TODO: we need to poke at the index here and see if there's any staged changes
+  //   - if so, these changes are the new contents of the current commit
+  //   - if not, the changes associated with the current commit are a no-op and
+  //     needs to be skipped to continue the rebase
+  //
+
   // TODO: there are some cases we need to handle and surface here:
   //  - rebase continued and completed without error
   //  - rebase continued but encountered a different set of conflicts
