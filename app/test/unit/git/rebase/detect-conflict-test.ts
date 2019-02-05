@@ -95,8 +95,8 @@ describe('git/rebase', () => {
       status = await getStatusOrThrow(repository)
     })
 
-    it('returns a non-success code', async () => {
-      expect(result).not.toBe(ContinueRebaseResult.CompletedWithoutError)
+    it('indicates that the rebase was not complete', async () => {
+      expect(result).toBe(ContinueRebaseResult.OutstandingFilesNotStaged)
     })
 
     it('REBASE_HEAD is still found', async () => {
@@ -114,6 +114,7 @@ describe('git/rebase', () => {
 
   describe('continue after resolving conflicts', () => {
     let beforeRebaseTip: Commit
+    let result: ContinueRebaseResult
     let status: IStatusResult
 
     beforeEach(async () => {
@@ -152,24 +153,28 @@ describe('git/rebase', () => {
 
       expect(diffCheckAfter.exitCode).toEqual(0)
 
-      await continueRebase(repository, files)
+      result = await continueRebase(repository, files)
 
       status = await getStatusOrThrow(repository)
     })
 
-    it('REBASE_HEAD is no longer found', async () => {
+    it('returns success', () => {
+      expect(result).toBe(ContinueRebaseResult.CompletedWithoutError)
+    })
+
+    it('REBASE_HEAD is no longer found', () => {
       expect(status.rebaseHeadFound).toBe(false)
     })
 
-    it('no longer has working directory changes', async () => {
+    it('no longer has working directory changes', () => {
       expect(status.workingDirectory.files).toHaveLength(0)
     })
 
-    it('returns to the feature branch', async () => {
+    it('returns to the feature branch', () => {
       expect(status.currentBranch).toBe(featureBranch)
     })
 
-    it('branch is now a different ref', async () => {
+    it('branch is now a different ref', () => {
       expect(status.currentTip).not.toBe(beforeRebaseTip.sha)
     })
   })

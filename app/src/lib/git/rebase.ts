@@ -55,10 +55,13 @@ export async function abortRebase(repository: Repository) {
 export enum ContinueRebaseResult {
   CompletedWithoutError = 'CompletedWithoutError',
   ConflictsEncountered = 'ConflictsEncountered',
+  OutstandingFilesNotStaged = 'OutstandingFilesNotStaged',
   Aborted = 'Aborted',
 }
 
 const rebaseEncounteredConflictsRe = /Resolve all conflicts manually, mark them as resolved/
+
+const filesNotMergedRe = /You must edit all merge conflicts and then\smark them as resolved/
 
 function parseRebaseResult(result: IGitResult): ContinueRebaseResult {
   if (result.exitCode === 0) {
@@ -69,9 +72,11 @@ function parseRebaseResult(result: IGitResult): ContinueRebaseResult {
     return ContinueRebaseResult.ConflictsEncountered
   }
 
-  log.warn(`unhandled rebase output: ${JSON.stringify(result)}`)
+  if (filesNotMergedRe.test(result.stdout)) {
+    return ContinueRebaseResult.OutstandingFilesNotStaged
+  }
 
-  throw new Error(`Unhandled result found`)
+  throw new Error(`Unhandled result found: '${JSON.stringify(result)}'`)
 }
 
 /** Proceed with the current rebase operation and report back on whether it completed */
