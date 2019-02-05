@@ -3221,14 +3221,14 @@ export class AppStore extends TypedBaseStore<IAppState> {
   public async _continueRebase(
     repository: Repository,
     workingDirectory: WorkingDirectoryStatus
-  ): Promise<void> {
+  ) {
     const gitStore = this.gitStoreCache.get(repository)
 
     const trackedFiles = workingDirectory.files.filter(f => {
       return f.status.kind !== AppFileStatusKind.Untracked
     })
 
-    await gitStore.performFailableOperation(() =>
+    return await gitStore.performFailableOperation(() =>
       continueRebase(repository, trackedFiles)
     )
   }

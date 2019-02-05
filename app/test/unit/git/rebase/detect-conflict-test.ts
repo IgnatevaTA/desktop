@@ -7,6 +7,7 @@ import {
   abortRebase,
   continueRebase,
   rebase,
+  ContinueRebaseResult,
 } from '../../../../src/lib/git/rebase'
 import { Commit } from '../../../../src/models/commit'
 import { AppFileStatusKind } from '../../../../src/models/status'
@@ -78,7 +79,7 @@ describe('git/rebase', () => {
   })
 
   describe('attempt to continue without resolving conflicts', () => {
-    let result: IGitResult
+    let result: ContinueRebaseResult
     let status: IStatusResult
 
     beforeEach(async () => {
@@ -94,8 +95,8 @@ describe('git/rebase', () => {
       status = await getStatusOrThrow(repository)
     })
 
-    it('returns a non-zero exit code', async () => {
-      expect(result.exitCode).toBeGreaterThan(0)
+    it('returns a non-success code', async () => {
+      expect(result).not.toBe(ContinueRebaseResult.CompletedWithoutError)
     })
 
     it('REBASE_HEAD is still found', async () => {
@@ -104,7 +105,7 @@ describe('git/rebase', () => {
 
     it('still has conflicted files in working directory', async () => {
       expect(
-        status.workingDirectory.files.filter(
+        status!.workingDirectory.files.filter(
           f => f.status.kind === AppFileStatusKind.Conflicted
         )
       ).toHaveLength(2)

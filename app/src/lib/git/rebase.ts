@@ -3,11 +3,15 @@ import * as FSE from 'fs-extra'
 
 import { Repository } from '../../models/repository'
 import { git } from './core'
-import { WorkingDirectoryFileChange } from '../../models/status'
+import {
+  WorkingDirectoryFileChange,
+  AppFileStatusKind,
+} from '../../models/status'
 import { ManualConflictResolution } from '../../models/manual-conflict-resolution'
 import { stageConflictedFile } from './stage'
 import { stageFiles } from './update-index'
-import { GitError } from 'dugite'
+import { GitError, IGitResult } from 'dugite'
+import { getStatus } from './status'
 
 /**
  * Check the `.git/REBASE_HEAD` file exists in a repository to confirm
@@ -48,12 +52,34 @@ export async function abortRebase(repository: Repository) {
   await git(['rebase', '--abort'], repository.path, 'abortRebase')
 }
 
-/** Proceed with the current rebase operation */
+export enum ContinueRebaseResult {
+  CompletedWithoutError = 'CompletedWithoutError',
+  ConflictsEncountered = 'ConflictsEncountered',
+  Aborted = 'Aborted',
+}
+
+const rebaseEncounteredConflictsRe = /Resolve all conflicts manually, mark them as resolved/
+
+function parseRebaseResult(result: IGitResult): ContinueRebaseResult {
+  if (result.exitCode === 0) {
+    return ContinueRebaseResult.CompletedWithoutError
+  }
+
+  if (rebaseEncounteredConflictsRe.test(result.stdout)) {
+    return ContinueRebaseResult.ConflictsEncountered
+  }
+
+  log.warn(`unhandled rebase output: ${JSON.stringify(result)}`)
+
+  throw new Error(`Unhandled result found`)
+}
+
+/** Proceed with the current rebase operation and report back on whether it completed */
 export async function continueRebase(
   repository: Repository,
   files: ReadonlyArray<WorkingDirectoryFileChange>,
   manualResolutions: ReadonlyMap<string, ManualConflictResolution> = new Map()
-) {
+): Promise<ContinueRebaseResult> {
   // apply conflict resolutions
   for (const [path, resolution] of manualResolutions) {
     const file = files.find(f => f.path === path)
@@ -70,18 +96,45 @@ export async function continueRebase(
 
   await stageFiles(repository, otherFiles)
 
-  // TODO: we need to poke at the index here and see if there's any staged changes
-  //   - if so, these changes are the new contents of the current commit
-  //   - if not, the changes associated with the current commit are a no-op and
-  //     needs to be skipped to continue the rebase
-  //
+  const status = await getStatus(repository)
+
+  if (status == null) {
+    log.warn(
+      `[rebase] unable to get status after staging changes, skipping any other steps`
+    )
+    return ContinueRebaseResult.Aborted
+  }
+
+  const trackedFiles = status.workingDirectory.files.filter(
+    f => f.status.kind !== AppFileStatusKind.Untracked
+  )
+
+  if (trackedFiles.length === 0) {
+    const rebaseHead = Path.join(repository.path, '.git', 'REBASE_HEAD')
+    const rebaseCurrentCommit = await FSE.readFile(rebaseHead)
+
+    log.warn(
+      `[rebase] no tracked changes to commit for ${rebaseCurrentCommit}, continuing rebase but skipping this commit`
+    )
+
+    const result = await git(
+      ['rebase', '--skip'],
+      repository.path,
+      'continueRebaseSkipCurrentCommit',
+      {
+        successExitCodes: new Set([0, 1, 128]),
+      }
+    )
+
+    return parseRebaseResult(result)
+  }
 
   // TODO: there are some cases we need to handle and surface here:
   //  - rebase continued and completed without error
   //  - rebase continued but encountered a different set of conflicts
   //  - rebase could not continue as there are outstanding conflicts
 
-  return await git(
+  const result = await git(
     ['rebase', '--continue'],
     repository.path,
     'continueRebase',
@@ -89,4 +142,6 @@ export async function continueRebase(
       successExitCodes: new Set([0, 1, 128]),
     }
   )
+
+  return parseRebaseResult(result)
 }

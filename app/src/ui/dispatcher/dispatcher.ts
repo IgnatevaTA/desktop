@@ -20,7 +20,7 @@ import {
   setGenericPassword,
   setGenericUsername,
 } from '../../lib/generic-git-auth'
-import { isGitRepository } from '../../lib/git'
+import { isGitRepository, ContinueRebaseResult } from '../../lib/git'
 import { isGitOnPath } from '../../lib/is-git-on-path'
 import {
   rejectOAuthRequest,
@@ -639,8 +639,18 @@ export class Dispatcher {
     repository: Repository,
     workingDirectory: WorkingDirectoryStatus
   ) {
-    await this.appStore._continueRebase(repository, workingDirectory)
+    const result = await this.appStore._continueRebase(
+      repository,
+      workingDirectory
+    )
     await this.appStore._loadStatus(repository)
+
+    if (result === ContinueRebaseResult.ConflictsEncountered) {
+      this.showPopup({
+        type: PopupType.RebaseConflicts,
+        repository,
+      })
+    }
   }
 
   /** aborts an in-flight merge and refreshes the repository's status */
