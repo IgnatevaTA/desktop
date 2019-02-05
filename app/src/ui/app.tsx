@@ -1527,10 +1527,10 @@ export class App extends React.Component<IAppProps, IAppState> {
 
         const {
           workingDirectory,
-          rebaseState,
+          conflictState,
         } = selectedState.state.changesState
 
-        if (rebaseState === null) {
+        if (conflictState === null || conflictState.kind === 'merge') {
           return null
         }
 

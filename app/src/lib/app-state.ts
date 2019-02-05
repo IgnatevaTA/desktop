@@ -256,15 +256,14 @@ export enum RepositorySectionTab {
 }
 
 /**
- * Stores information about a merge conflict when it occurs
+ * Stores information about conflicts when handling a merge or rebase
  */
 export interface IConflictState {
+  readonly kind: 'merge' | 'rebase'
   readonly currentBranch: string
   readonly currentTip: string
   readonly manualResolutions: Map<string, ManualConflictResolution>
 }
-
-export interface IRebaseState {}
 
 export interface IRepositoryState {
   readonly commitSelection: ICommitSelection
@@ -427,18 +426,11 @@ export interface IChangesState {
   readonly coAuthors: ReadonlyArray<IAuthor>
 
   /**
-   * Stores information about a merge conflict when it occurs
+   * Stores information about conflicts in the working directory
    *
-   * The absence of a value means there is no merge conflict
+   * The absence of a value means there is no merge or rebase conflict underway
    */
   readonly conflictState: IConflictState | null
-
-  /**
-   * Stores information about a merge conflict when it occurs
-   *
-   * The absence of a value means there is no merge conflict
-   */
-  readonly rebaseState: IRebaseState | null
 }
 
 /**

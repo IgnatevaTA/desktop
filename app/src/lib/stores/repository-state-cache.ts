@@ -117,7 +117,6 @@ function getInitialRepositoryState(): IRepositoryState {
       coAuthors: [],
       showCoAuthoredBy: false,
       conflictState: null,
-      rebaseState: null,
     },
     selectedSection: RepositorySectionTab.Changes,
     branchesState: {

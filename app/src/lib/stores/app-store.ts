@@ -184,7 +184,6 @@ import { ApiRepositoriesStore } from './api-repositories-store'
 import {
   updateChangedFiles,
   updateConflictState,
-  updateRebaseState,
 } from './updates/changes-state'
 import { ManualConflictResolution } from '../../models/manual-conflict-resolution'
 import { enableNewRebaseFlow } from '../feature-flag'
@@ -1567,10 +1566,6 @@ export class AppStore extends TypedBaseStore<IAppState> {
       conflictState: updateConflictState(state, status, this.statsStore),
     }))
 
-    this.repositoryStateCache.updateChangesState(repository, state => ({
-      rebaseState: updateRebaseState(state, status, this.statsStore),
-    }))
-
     this._triggerRebaseFlow(repository)
     this._triggerMergeConflictsFlow(repository)
 
@@ -1598,8 +1593,8 @@ export class AppStore extends TypedBaseStore<IAppState> {
     }
 
     const repoState = this.repositoryStateCache.get(repository)
-    const { rebaseState } = repoState.changesState
-    if (rebaseState === null) {
+    const { conflictState } = repoState.changesState
+    if (conflictState === null || conflictState.kind === 'merge') {
       return
     }
 
