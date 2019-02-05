@@ -1,4 +1,4 @@
-import { IGitResult } from 'dugite'
+import { IGitResult, GitProcess } from 'dugite'
 import * as FSE from 'fs-extra'
 import * as Path from 'path'
 
@@ -125,11 +125,13 @@ describe('git/rebase', () => {
       const afterRebase = await getStatusOrThrow(repository)
 
       const { files } = afterRebase.workingDirectory
-      const paths = files
-        .filter(f => f.status.kind === AppFileStatusKind.Conflicted)
-        .map(f => f.path)
 
-      console.log(`files to resolve: ${JSON.stringify(paths)}`)
+      const diffCheckBefore = await GitProcess.exec(
+        ['diff', '--check'],
+        repository.path
+      )
+
+      expect(diffCheckBefore.exitCode).toBeGreaterThan(0)
 
       // resolve conflicts by writing files to disk
       await FSE.writeFile(
@@ -141,6 +143,13 @@ describe('git/rebase', () => {
         Path.join(repository.path, 'OTHER.md'),
         '# HELLO WORLD! \nTHINGS GO HERE\nALSO FEATURE BRANCH UNDERWAY\n'
       )
+
+      const diffCheckAfter = await GitProcess.exec(
+        ['diff', '--check'],
+        repository.path
+      )
+
+      expect(diffCheckAfter.exitCode).toEqual(0)
 
       await continueRebase(repository, files)
 
