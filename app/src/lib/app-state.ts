@@ -270,6 +270,7 @@ export type MergeConflictState = {
  */
 export type RebaseConflictState = {
   readonly kind: 'rebase'
+  readonly currentTip: string
   readonly manualResolutions: Map<string, ManualConflictResolution>
   // TODO: what other state do we need to capture here?
 }

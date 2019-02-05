@@ -159,6 +159,7 @@ describe('updateConflictState', () => {
       const prevState = createState({
         conflictState: {
           kind: 'rebase',
+          currentTip: 'deadbeef',
           manualResolutions,
         },
       })
@@ -173,9 +174,6 @@ describe('updateConflictState', () => {
       })
       const status = createStatus({
         rebaseHeadFound: true,
-        // TODO: this feels like test noise because these fields are used
-        //       as part of the `merge` conflicts flow
-        currentBranch: 'master',
         currentTip: 'new-sha',
       })
 
@@ -183,6 +181,7 @@ describe('updateConflictState', () => {
 
       expect(conflictState).toEqual({
         kind: 'rebase',
+        currentTip: 'new-sha',
         manualResolutions: new Map<string, ManualConflictResolution>(),
       })
     })

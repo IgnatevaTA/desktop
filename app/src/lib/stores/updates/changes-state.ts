@@ -106,24 +106,36 @@ function getConflictState(
     return null
   }
 
-  const { currentBranch, currentTip } = status
-  if (currentBranch == null || currentTip == null) {
-    return null
+  if (status.mergeHeadFound) {
+    const { currentBranch, currentTip } = status
+    if (currentBranch == null || currentTip == null) {
+      return null
+    }
+
+    if (status.mergeHeadFound) {
+      return {
+        kind: 'merge',
+        currentBranch,
+        currentTip,
+        manualResolutions,
+      }
+    }
   }
 
-  if (status.mergeHeadFound) {
+  if (status.rebaseHeadFound) {
+    const { currentTip } = status
+    if (currentTip == null) {
+      return null
+    }
+
     return {
-      kind: 'merge',
-      currentBranch,
+      kind: 'rebase',
       currentTip,
       manualResolutions,
     }
   }
 
-  return {
-    kind: 'rebase',
-    manualResolutions,
-  }
+  return null
 }
 
 function updateMergeConflictState(
